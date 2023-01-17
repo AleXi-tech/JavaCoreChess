@@ -4,7 +4,7 @@ import org.fkocak.enums.Color;
 import org.fkocak.enums.Type;
 import org.fkocak.mover.*;
 
-public class ChessPiece {
+public abstract class ChessPiece {
 
     private Type type;
 
@@ -36,12 +36,12 @@ public class ChessPiece {
 
     public int[][] moveableList(int[][] board, int x, int y){
         return switch (this.type){
-            case PAWN -> PawnMover.pawnMover(board, x, y);
-            case KNIGHT -> KnightMover.knightMover(board, x, y);
-            case BISHOP -> BishopMover.bishopMover(board, x, y);
-            case ROOK -> RookMover.rookMover(board, x, y);
-            case QUEEN -> QueenMover.queenMover(board, x, y);
-            case KING -> KingMover.kingMover(board, x, y);
+            case PAWN -> PawnMover.pawnMover(board, x, y, color);
+            case KNIGHT -> KnightMover.knightMover(board, x, y, color);
+            case BISHOP -> BishopMover.bishopMover(board, x, y, color);
+            case ROOK -> RookMover.rookMover(board, x, y, color);
+            case QUEEN -> QueenMover.queenMover(board, x, y, color);
+            case KING -> KingMover.kingMover(board, x, y, color);
         };
 
     }

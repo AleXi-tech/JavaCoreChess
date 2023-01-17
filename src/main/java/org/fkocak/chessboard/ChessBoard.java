@@ -55,7 +55,9 @@ public class ChessBoard {
                 }
             }
         }
-        System.err.println(Arrays.deepToString(intBoard));
+        for (int[] rows: intBoard){
+            System.err.println(Arrays.toString(rows));
+        }
         return intBoard;
     }
 
@@ -69,6 +71,7 @@ public class ChessBoard {
                 currentPosition[1] < 0 ||
                 currentPosition[1] > 7
         ) {
+            System.err.println("Current position is out of bounds!");
             return false;
         }
         // Check if the desired position is out of bounds
@@ -78,19 +81,22 @@ public class ChessBoard {
                 desiredPosition[1] < 0 ||
                 desiredPosition[1] > 7
         ) {
+            System.err.println("Desired position is out of bounds!");
             return false;
         }
         // Check if the current position is empty
         if (board[currentPosition[0]][currentPosition[1]] == null) {
+            System.err.println("There is no piece at the current position!");
             return false;
         }
         // Check if the piece at the current position belongs to the current player
         if (board[currentPosition[0]][currentPosition[1]].getColor() != turn) {
+            System.err.println("Selected piece does not belong to you!");
             return false;
         }
         // Check if the piece at the current position can move to the desired position
         int[][] moveableList = board[currentPosition[0]][currentPosition[1]].moveableList(intBoard, currentPosition[0], currentPosition[1]);
-        System.err.println(Arrays.deepToString(moveableList));
+        System.out.println("Movable positions: "+Arrays.deepToString(moveableList));
         boolean canMove = false;
         for (int[] ints : moveableList) {
             if (Arrays.equals(ints, desiredPosition)) {
