@@ -2,13 +2,15 @@ package org.fkocak.chessboard;
 
 import org.fkocak.chesspieces.*;
 import org.fkocak.enums.Color;
-
-import java.util.Arrays;
+import org.fkocak.enums.Type;
+import org.fkocak.utils.MoveValidator;
 
 public class ChessBoard {
     private final ChessPiece[][] board = new ChessPiece[8][8];
     private Color turn = Color.WHITE;
 
+    private static int[] whiteKingPosition = new int[]{0,5};
+    private static int[] blackKingPosition = new int[]{7,5};
     public ChessBoard() {
         // Instantiate white pieces
         for (int i = 0; i < 8; i++) {
@@ -44,80 +46,71 @@ public class ChessBoard {
         }
     }
 
-    private int[][] convertBoard(ChessPiece[][] chessBoard) {
-        int[][] intBoard = new int[8][8];
+    private static ChessPiece[][] copyBoard(ChessPiece[][] originalBoard) {
+        ChessPiece[][] copyBoard = new ChessPiece[8][8];
         for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                if (chessBoard[i][j] == null) {
-                    intBoard[i][j] = 0;
-                } else {
-                    intBoard[i][j] = chessBoard[i][j].getType().value;
-                }
-            }
+            System.arraycopy(originalBoard[i], 0, copyBoard[i], 0, 8);
         }
-        for (int[] rows: intBoard){
-            System.err.println(Arrays.toString(rows));
-        }
-        return intBoard;
+        return copyBoard;
     }
 
-
-    public boolean isValidMove(int[] currentPosition, int[] desiredPosition) {
-        int[][] intBoard = convertBoard(board);
-        // Check if the current position is out of bounds
-        if (
-                currentPosition[0] < 0 ||
-                currentPosition[0] > 7 ||
-                currentPosition[1] < 0 ||
-                currentPosition[1] > 7
-        ) {
-            System.err.println("Current position is out of bounds!");
-            return false;
-        }
-        // Check if the desired position is out of bounds
-        if (
-                desiredPosition[0] < 0 ||
-                desiredPosition[0] > 7 ||
-                desiredPosition[1] < 0 ||
-                desiredPosition[1] > 7
-        ) {
-            System.err.println("Desired position is out of bounds!");
-            return false;
-        }
-        // Check if the current position is empty
-        if (board[currentPosition[0]][currentPosition[1]] == null) {
-            System.err.println("There is no piece at the current position!");
-            return false;
-        }
-        // Check if the piece at the current position belongs to the current player
-        if (board[currentPosition[0]][currentPosition[1]].getColor() != turn) {
-            System.err.println("Selected piece does not belong to you!");
-            return false;
-        }
-        // Check if the piece at the current position can move to the desired position
-        int[][] moveableList = board[currentPosition[0]][currentPosition[1]].moveableList(intBoard, currentPosition[0], currentPosition[1]);
-        System.out.println("Movable positions: "+Arrays.deepToString(moveableList));
-        boolean canMove = false;
-        for (int[] ints : moveableList) {
-            if (Arrays.equals(ints, desiredPosition)) {
-                canMove = true;
-                break;
-            }
-        }
-        return canMove;
-    }
 
     public void setBoard(int[] currentPosition, int[] desiredPosition) {
-        if (isValidMove(currentPosition, desiredPosition)) {
+        if (MoveValidator.isValidMove(turn,board,currentPosition, desiredPosition)) {
             ChessPiece pieceToMove = board[currentPosition[0]][currentPosition[1]];
             board[currentPosition[0]][currentPosition[1]] = null;
             board[desiredPosition[0]][desiredPosition[1]] = pieceToMove;
             pieceToMove.setPosition(desiredPosition);
+            if(pieceToMove.getType() == Type.KING) kingPositionChanger(turn,desiredPosition);
             changeTurn();
         }else System.err.println("Error on setBoard");
     }
+    private void kingPositionChanger(Color turn, int[] desiredPosition){
+        if (turn == Color.WHITE) whiteKingPosition = desiredPosition;
+        else blackKingPosition = desiredPosition;
+    }
 
+    private boolean isKingInCheck(Color turn, ChessPiece[][] board) {
+        Color oppositeColor = (turn == Color.WHITE) ? Color.BLACK : Color.WHITE;
+        int[] kingPosition = (turn == Color.WHITE) ? whiteKingPosition : blackKingPosition;
 
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (board[i][j] != null && board[i][j].getColor() == oppositeColor) {
+                    // check if the opponent's piece has a valid move to the current player's king
+                    if (MoveValidator.isValidMove(oppositeColor, board, new int[] {i, j}, kingPosition)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isKingSafe(Color turn) {
+        int[] kingPosition = (turn == Color.WHITE) ? whiteKingPosition : blackKingPosition;
+        int x = kingPosition[0];
+        int y = kingPosition[1];
+
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                int newX = x + i;
+                int newY = y + j;
+                if (newX >= 0 && newX < 8 && newY >= 0 && newY < 8) {
+                    //create a copy of the board
+                    ChessPiece[][] copyBoard = copyBoard(board);
+                    //make the move on the copy board
+                    copyBoard[x][y] = null;
+                    copyBoard[newX][newY] = new King(turn, new int[]{newX, newY});
+                    // check if the king is in check after making that move
+                    if (!isKingInCheck(turn, copyBoard)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     public ChessPiece[][] getBoard() {
         return board;
